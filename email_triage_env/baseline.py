@@ -1,13 +1,23 @@
 """
 Baseline inference script for EmailTriageEnv.
 
-Runs Google Gemini (gemini-2.0-flash-lite) against all 3 tasks via
-the google-genai Python client (new SDK).
+Runs a model against all 3 tasks via the OpenAI API client.
+Reads API credentials from environment variables (OPENAI_API_KEY).
+Produces a reproducible baseline score on all 3 tasks.
 
-Set GOOGLE_API_KEY in your environment before running.
+Supports two backends (auto-detected from OPENAI_BASE_URL):
+  - OpenAI models (default): gpt-4o-mini
+  - Google AI Studio (OpenAI-compatible endpoint): gemini-2.0-flash
 
 Usage:
-    set GOOGLE_API_KEY=AIza...
+    # With OpenAI:
+    set OPENAI_API_KEY=sk-...
+    python -m email_triage_env.baseline
+
+    # With Google AI Studio (free, no OpenAI account needed):
+    set OPENAI_API_KEY=AIza...
+    set OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+    set OPENAI_MODEL=gemini-2.0-flash
     python -m email_triage_env.baseline
 """
 
@@ -19,8 +29,7 @@ import sys
 import time
 
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from openai import OpenAI
 
 from email_triage_env.environment import EmailTriageEnv
 from email_triage_env.models import EmailAction, EmailObservation
@@ -145,15 +154,33 @@ def _parse_action(raw: str) -> EmailAction:
 
 def run_baseline() -> None:
     """Run the baseline agent against all 3 tasks and print results."""
-    api_key = os.environ.get("GOOGLE_API_KEY")
+    api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        print("ERROR: GOOGLE_API_KEY environment variable is not set.")
-        print('  set GOOGLE_API_KEY=AIza...')
+        print("ERROR: OPENAI_API_KEY environment variable is not set.")
+        print("  set OPENAI_API_KEY=sk-...")
+        print("")
+        print("  Alternatively, use Google AI Studio (free):")
+        print("  set OPENAI_API_KEY=AIza...")
+        print("  set OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/")
+        print("  set OPENAI_MODEL=gemini-2.0-flash")
         sys.exit(1)
 
-    # Configure the Gemini client (new google-genai SDK)
-    client = genai.Client(api_key=api_key)
-    model_name = "gemma-4-31b-it"
+    # Configure the OpenAI client
+    # Supports custom base_url for Google AI Studio or other OpenAI-compatible APIs
+    base_url = os.environ.get("OPENAI_BASE_URL", None)
+    client_kwargs: dict = {"api_key": api_key}
+    if base_url:
+        client_kwargs["base_url"] = base_url
+
+    client = OpenAI(**client_kwargs)
+
+    # Model selection: allow override via env var, default to gpt-4o-mini
+    model_name = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+
+    print(f"Model: {model_name}")
+    if base_url:
+        print(f"Base URL: {base_url}")
+    print(f"Seed: 42 (deterministic)")
 
     task_labels = {
         "basic_triage": "Task 1 (easy)   -- basic_triage:          ",
@@ -173,23 +200,24 @@ def run_baseline() -> None:
 
         step = 0
         while True:
-            # Build the prompt (combining System Prompt and User Prompt for Gemma compatibility)
-            user_prompt = f"{SYSTEM_PROMPT}\n\n{_format_email_prompt(obs)}"
+            # Build the prompt
+            user_prompt = _format_email_prompt(obs)
 
-            # Call Gemini (with retry for rate limits)
+            # Call the model (with retry for rate limits)
             raw_output = ""
             max_retries = 5
             for attempt in range(max_retries + 1):
                 try:
-                    response = client.models.generate_content(
+                    response = client.chat.completions.create(
                         model=model_name,
-                        contents=user_prompt,
-                        config=types.GenerateContentConfig(
-                            temperature=0.0,
-                            max_output_tokens=512,
-                        ),
+                        messages=[
+                            {"role": "system", "content": SYSTEM_PROMPT},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                        temperature=0.0,
+                        max_tokens=512,
                     )
-                    raw_output = response.text or ""
+                    raw_output = response.choices[0].message.content or ""
                     break  # success
                 except Exception as e:
                     err_str = str(e)

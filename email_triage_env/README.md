@@ -153,13 +153,22 @@ print(env.state())
 
 ## 9. Running Baseline
 
-The baseline script uses Google's `gemini-2.0-flash` model:
+The baseline script uses the **OpenAI API client** to run a model against all 3 tasks:
 
 ```bash
-# Set your API key (from Google AI Studio)
-set GOOGLE_API_KEY=AIza...
+# Set your API key
+set OPENAI_API_KEY=sk-...
 
-# Run the baseline
+# Run the baseline (uses gpt-4o-mini by default)
+python -m email_triage_env.baseline
+```
+
+Alternatively, use Google AI Studio (free, no OpenAI account needed):
+
+```bash
+set OPENAI_API_KEY=AIza...
+set OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+set OPENAI_MODEL=gemini-2.0-flash
 python -m email_triage_env.baseline
 ```
 
@@ -181,10 +190,10 @@ Average Score: 0.XX
 docker build -t email-triage-env .
 
 # Run with your API key
-docker run -e GOOGLE_API_KEY="AIza..." email-triage-env
+docker run -e OPENAI_API_KEY="sk-..." email-triage-env
 
 # Interactive shell
-docker run -it -e GOOGLE_API_KEY="AIza..." email-triage-env /bin/bash
+docker run -it -e OPENAI_API_KEY="sk-..." email-triage-env /bin/bash
 ```
 
 ---
@@ -195,7 +204,7 @@ To deploy on HuggingFace Spaces:
 
 1. Create a new Space (Docker SDK).
 2. Upload all project files.
-3. Set `GOOGLE_API_KEY` as a Space secret.
+3. Set `OPENAI_API_KEY` as a Space secret.
 4. The Dockerfile will auto-build and run the baseline.
 
 For a Gradio/Streamlit interface, wrap the environment in a UI:
@@ -255,7 +264,7 @@ email_triage_env/
 ├── data/
 │   ├── __init__.py
 │   └── emails.py         # Synthetic email dataset (200 emails, seed=42)
-├── baseline.py           # Baseline inference (Google Gemini 2.0 Flash)
+├── baseline.py           # Baseline inference (OpenAI API client)
 ├── openenv.yaml          # OpenEnv metadata spec
 ├── Dockerfile            # Docker container
 ├── requirements.txt      # Python dependencies
