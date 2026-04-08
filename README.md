@@ -1,3 +1,12 @@
+---
+title: Email Triage OpenEnv
+emoji: ??
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
 # 📧 EmailTriageEnv
 
 A production-ready OpenEnv environment for training and evaluating AI agents on real-world email triage and prioritization tasks.
@@ -276,3 +285,4 @@ email_triage_env/
 ## License
 
 MIT
+
