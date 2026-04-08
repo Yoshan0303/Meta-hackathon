@@ -1,0 +1,13 @@
+name: email-triage-env
+version: "1.0.0"
+description: "Real-world email triage environment for AI agent training"
+tags: [openenv, email, triage, nlp, real-world]
+observation_type: EmailObservation
+action_type: EmailAction
+reward_range: [-1.0, 1.0]
+tasks:
+  - basic_triage
+  - triage_with_replies
+  - full_triage_under_pressure
+author: ""
+python_requires: ">=3.10"
