@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "email_triage_env"
@@ -18,8 +18,9 @@ dependencies = [
     "pyyaml",
     "python-dotenv",
     "fastapi",
-    "uvicorn"
+    "uvicorn",
+    "openenv-core>=0.2.0"
 ]
 
-[tool.setuptools.packages.find]
-include = ["email_triage_env", "email_triage_env.*"]
+[project.scripts]
+server = "server.app:main"
