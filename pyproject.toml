@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "email_triage_env"
+version = "1.0.0"
+authors = [
+  { name="Yoshan Suresh" }
+]
+description = "Real-world email triage environment for AI agent training"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "openai>=1.0.0",
+    "numpy",
+    "pyyaml",
+    "python-dotenv",
+    "fastapi",
+    "uvicorn"
+]
+
+[tool.setuptools.packages.find]
+include = ["email_triage_env", "email_triage_env.*"]
