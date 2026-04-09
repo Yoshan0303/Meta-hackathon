@@ -215,6 +215,7 @@ def run_baseline() -> None:
             print(f"\n{'='*60}")
             print(f"Running {task_id} ...")
             print(f"{'='*60}")
+            print(f"[START] task={task_id}", flush=True)
 
             env = EmailTriageEnv(task_id=task_id, seed=42)
             obs = env.reset()
@@ -269,6 +270,7 @@ def run_baseline() -> None:
                     f"priority={status}  "
                     f"action={action.action}"
                 )
+                print(f"[STEP] step={step} reward={reward}", flush=True)
 
                 if done:
                     break
@@ -278,6 +280,7 @@ def run_baseline() -> None:
             scores.append(score)
             label = task_labels[task_id]
             print(f"\n{label} Score = {score:.2f}")
+            print(f"[END] task={task_id} score={score} steps={step}", flush=True)
 
         # Summary
         avg = sum(scores) / len(scores) if scores else 0.0
