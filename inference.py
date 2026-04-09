@@ -168,23 +168,23 @@ def run_baseline() -> None:
         except Exception as e:
             print(f"OpenEnv Container port check missed (not required for local inference tests): {e}")
 
-        api_key = os.environ.get("OPENAI_API_KEY")
+        # Honor evaluator-injected environment variables (API_KEY, API_BASE_URL, MODEL_NAME)
+        api_key = os.environ.get("API_KEY") or os.environ.get("OPENAI_API_KEY")
         if not api_key:
-            print("WARNING: OPENAI_API_KEY environment variable is not set.")
+            print("WARNING: API_KEY and OPENAI_API_KEY are not set.")
             print("Using dummy fallback key to complete validation without unhandled exceptions.")
             api_key = "sk-dummy-validation-key"
 
         # Configure the OpenAI client
-        # Supports custom base_url for OpenAI-compatible APIs
-        base_url = os.environ.get("OPENAI_BASE_URL", None)
+        base_url = os.environ.get("API_BASE_URL") or os.environ.get("OPENAI_BASE_URL")
         client_kwargs: dict = {"api_key": api_key}
         if base_url:
             client_kwargs["base_url"] = base_url
 
         client = OpenAI(**client_kwargs)
 
-        # Model selection: allow override via env var, default to gpt-4o-mini
-        model_name = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+        # Model selection: favor evaluator's MODEL_NAME over OPENAI_MODEL
+        model_name = os.environ.get("MODEL_NAME") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
         print(f"Model: {model_name}")
         if base_url:
